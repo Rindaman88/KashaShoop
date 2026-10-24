@@ -67,13 +67,13 @@ export const discountPct = (pr: Product) =>
   pr.originalPrice ? Math.round((1 - pr.price / pr.originalPrice) * 100) : 0;
 
 export type CatalogFilters = {
-  q?: string;
-  category?: string[];
-  brand?: string[];
-  min?: number;
-  max?: number;
-  sort?: "low" | "high" | "rating";
-  tag?: "best" | "new" | "promo";
+  q?: string | undefined;
+  category?: string[] | undefined;
+  brand?: string[] | undefined;
+  min?: number | undefined;
+  max?: number | undefined;
+  sort?: "low" | "high" | "rating" | undefined;
+  tag?: "best" | "new" | "promo" | undefined;
 };
 
 export function filterProducts(list: Product[], f: CatalogFilters): Product[] {

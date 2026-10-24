@@ -33,7 +33,7 @@ function Index() {
 
   const subscribe = (e: FormEvent) => {
     e.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(email)) return toast.error("Masukkan email yang valid");
+    if (!/^\S+@\S+\.\S+$/.test(email)) { toast.error("Masukkan email yang valid"); return; }
     toast.success("Terima kasih! Kamu sudah berlangganan newsletter.");
     setEmail("");
   };

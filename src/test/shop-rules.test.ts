@@ -16,7 +16,7 @@ describe("shop rules", () => {
   });
   it("sorts by lowest price", () => {
     const r = filterProducts(PRODUCTS, { sort: "low" });
-    expect(r[0].price).toBeLessThanOrEqual(r[1].price);
+    expect(r[0]!.price).toBeLessThanOrEqual(r[1]!.price);
   });
   it("searches by brand", () => {
     expect(filterProducts(PRODUCTS, { q: "cosrx" }).every((p) => p.brand === "COSRX")).toBe(true);

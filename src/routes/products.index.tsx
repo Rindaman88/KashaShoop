@@ -9,13 +9,13 @@ const num = (v: unknown) => (v === undefined || v === "" || isNaN(Number(v)) ? u
 
 export const Route = createFileRoute("/products/")({
   validateSearch: (s: Record<string, unknown>): CatalogFilters => ({
-    q: typeof s.q === "string" ? s.q : undefined,
-    category: arr(s.category),
-    brand: arr(s.brand),
-    min: num(s.min),
-    max: num(s.max),
-    sort: ["low", "high", "rating"].includes(s.sort as string) ? (s.sort as CatalogFilters["sort"]) : undefined,
-    tag: ["best", "new", "promo"].includes(s.tag as string) ? (s.tag as CatalogFilters["tag"]) : undefined,
+    q: typeof s["q"] === "string" ? s["q"] : undefined,
+    category: arr(s["category"]),
+    brand: arr(s["brand"]),
+    min: num(s["min"]),
+    max: num(s["max"]),
+    sort: ["low", "high", "rating"].includes(s["sort"] as string) ? (s["sort"] as CatalogFilters["sort"]) : undefined,
+    tag: ["best", "new", "promo"].includes(s["tag"] as string) ? (s["tag"] as CatalogFilters["tag"]) : undefined,
   }),
   head: () => ({
     meta: [
