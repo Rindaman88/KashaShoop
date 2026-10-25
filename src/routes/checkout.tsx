@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { checkoutTotals, formatIDR, getProduct } from "@/lib/products";
 import { useStore } from "@/lib/store";
 
@@ -38,6 +40,7 @@ function Checkout() {
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [code, setCode] = useState("");
   const [applied, setApplied] = useState("");
+  const [placing, setPlacing] = useState(false);
   const { shipping, discount, total } = checkoutTotals(subtotal, applied);
 
   if (cart.length === 0)
@@ -48,13 +51,36 @@ function Checkout() {
       </div>
     );
 
-  const submit = (e: FormEvent) => {
+  if (!user)
+    return (
+      <div className="container-k py-20 text-center">
+        <h1 className="font-display text-3xl font-semibold">Masuk untuk melanjutkan checkout</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Pesananmu akan tersimpan di akunmu.</p>
+        <Button size="lg" className="mt-6" asChild><Link to="/login">Masuk / Daftar</Link></Button>
+      </div>
+    );
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     const errs = validateCheckout(f);
     setErrors(errs);
     if (Object.keys(errs).length) return;
-    const orderId = "KS" + Date.now().toString().slice(-8);
-    sessionStorage.setItem("kasha-last-order", JSON.stringify({ orderId, name: f.name, total, payment: f.payment }));
+    setPlacing(true);
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData.user?.id;
+    if (!uid) { setPlacing(false); toast.error("Sesi berakhir, silakan masuk kembali"); return; }
+    const items = cart.map((i) => {
+      const p = getProduct(i.id)!;
+      return { product_id: i.id, name: p.name, brand: p.brand, price: p.price, qty: i.qty };
+    });
+    const { data: order, error } = await supabase
+      .from("orders")
+      .insert({ user_id: uid, items, subtotal, shipping, discount, total, status: "pending" })
+      .select("id")
+      .single();
+    setPlacing(false);
+    if (error || !order) { toast.error("Gagal membuat pesanan, coba lagi"); return; }
+    sessionStorage.setItem("kasha-last-order", JSON.stringify({ orderId: order.id.slice(0, 8).toUpperCase(), name: f.name, total, payment: f.payment }));
     clearCart();
     navigate({ to: "/order-success" });
   };
