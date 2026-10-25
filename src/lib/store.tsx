@@ -43,14 +43,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = usePersisted<CartItem[]>("kasha-cart", []);
   const [wishlist, setWishlist] = usePersisted<string[]>("kasha-wishlist", []);
   const [user, setUser] = useState<User>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const applySession = async () => {
       const { data } = await supabase.auth.getUser();
       const u = data.user;
-      if (!u) { setUser(null); return; }
+      if (!u) { setUser(null); setUserId(null); return; }
+      setUserId(u.id);
       const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", u.id).maybeSingle();
       setUser({ name: profile?.full_name || u.email?.split("@")[0] || "Pengguna", email: u.email ?? "" });
+      // Merge remote cart with any local guest cart, then persist the merge.
+      const { data: remote } = await supabase.from("cart_items").select("product_id, qty").eq("user_id", u.id);
+      const remoteItems: CartItem[] = (remote ?? []).map((r) => ({ id: r.product_id, qty: r.qty }));
+      setCart((local) => {
+        const merged = [...remoteItems];
+        for (const li of local) {
+          const ex = merged.find((m) => m.id === li.id);
+          const max = getProduct(li.id)?.stock ?? 99;
+          if (ex) ex.qty = Math.min(max, ex.qty + li.qty);
+          else merged.push({ id: li.id, qty: Math.min(max, li.qty) });
+        }
+        if (merged.length)
+          void supabase.from("cart_items").upsert(merged.map((m) => ({ user_id: u.id, product_id: m.id, qty: m.qty })));
+        return merged;
+      });
     };
     applySession();
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
