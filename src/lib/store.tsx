@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { getProduct } from "./products";
 
 type CartItem = { id: string; qty: number };
@@ -41,7 +42,22 @@ function usePersisted<T>(key: string, initial: T) {
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = usePersisted<CartItem[]>("kasha-cart", []);
   const [wishlist, setWishlist] = usePersisted<string[]>("kasha-wishlist", []);
-  const [user, setUser] = usePersisted<User>("kasha-user", null);
+  const [user, setUser] = useState<User>(null);
+
+  useEffect(() => {
+    const applySession = async () => {
+      const { data } = await supabase.auth.getUser();
+      const u = data.user;
+      if (!u) { setUser(null); return; }
+      const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", u.id).maybeSingle();
+      setUser({ name: profile?.full_name || u.email?.split("@")[0] || "Pengguna", email: u.email ?? "" });
+    };
+    applySession();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") applySession();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const addToCart = (id: string, qty = 1) => {
     const pr = getProduct(id);
