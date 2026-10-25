@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/account")({
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/account")({
 });
 
 function Account() {
-  const { user, setUser, wishlist, cartCount } = useStore();
+  const { user, wishlist, cartCount } = useStore();
   const navigate = useNavigate();
   if (!user)
     return (
@@ -32,7 +33,7 @@ function Account() {
         <Link to="/wishlist" className="rounded-xl border p-5 hover:border-primary"><p className="text-2xl font-bold text-primary">{wishlist.length}</p><p className="text-sm">Wishlist</p></Link>
         <Link to="/cart" className="rounded-xl border p-5 hover:border-primary"><p className="text-2xl font-bold text-primary">{cartCount}</p><p className="text-sm">Item di keranjang</p></Link>
       </div>
-      <Button variant="outline" className="mt-8" onClick={() => { setUser(null); navigate({ to: "/" }); }}>Keluar</Button>
+      <Button variant="outline" className="mt-8" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/" }); }}>Keluar</Button>
     </div>
   );
 }

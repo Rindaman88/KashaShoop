@@ -9,7 +9,6 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         <div className="p-8 md:p-12">
           <h1 className="font-display text-4xl font-semibold">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
-          <p className="mt-4 rounded-lg bg-blush px-3 py-2 text-xs text-blush-foreground">Mode demo: akun hanya disimpan di browser ini, bukan autentikasi aman.</p>
           <div className="mt-6">{children}</div>
         </div>
       </div>
